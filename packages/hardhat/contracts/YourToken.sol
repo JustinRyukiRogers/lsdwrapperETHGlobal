@@ -9,13 +9,23 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
 
 contract LSDWrap is ERC20, ERC20Wrapper {
     address public factoryOwner;
+    uint256 private _initialCap;
+    uint256 private _growthRate; // in tokens per second
+    uint256 private _startTime;    
+
 
     constructor(
         string memory name,
         string memory symbol,
         IERC20 underlyingToken,
+        uint256 initialCap_,
+        uint256 growthRate_,
         address _factoryOwner
     ) ERC20(name, symbol) ERC20Wrapper(underlyingToken) {
+        require(initialCap_ > 0, "Initial cap must be greater than 0");
+        _initialCap = initialCap_;
+        _growthRate = growthRate_;
+        _startTime = block.timestamp;
         factoryOwner = _factoryOwner;
     }
 
@@ -24,7 +34,13 @@ contract LSDWrap is ERC20, ERC20Wrapper {
         return super.decimals();
     }
     
+    function cap() public view returns (uint256) {
+        uint256 elapsedTime = block.timestamp - _startTime;
+        return _initialCap + (_growthRate * elapsedTime);
+    }
+
     function wrap(uint256 amount) public {
+        require(totalSupply() + amount <= cap(), "ERC20: cap exceeded");       
         depositFor(msg.sender, amount);
     }
 
@@ -57,10 +73,12 @@ contract TokenFactory is Ownable {
     function createWrappedToken(
         string memory name,
         string memory symbol,
-        IERC20 selectedUnderlyingToken
+        IERC20 selectedUnderlyingToken,
+        uint256 cap,
+        uint256 growthRate
     ) public returns (address) {
         require(isMasterAllowedToken(selectedUnderlyingToken), "Token not in master allowed list");
-        LSDWrap newToken = new LSDWrap(name, symbol, selectedUnderlyingToken, msg.sender);
+        LSDWrap newToken = new LSDWrap(name, symbol, selectedUnderlyingToken, cap, growthRate, msg.sender);
         createdTokens.push(address(newToken));
         emit WrappedTokenCreated(address(newToken), selectedUnderlyingToken);
         return address(newToken);

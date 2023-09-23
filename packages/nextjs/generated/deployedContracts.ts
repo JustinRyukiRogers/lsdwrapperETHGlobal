@@ -5,7 +5,7 @@ const contracts = {
       name: "localhost",
       contracts: {
         TokenFactory: {
-          address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+          address: "0x0165878A594ca255338adfa4d48449f69242Eb8F",
           abi: [
             {
               anonymous: false,
@@ -87,6 +87,16 @@ const contracts = {
                   internalType: "contract IERC20",
                   name: "selectedUnderlyingToken",
                   type: "address",
+                },
+                {
+                  internalType: "uint256",
+                  name: "cap",
+                  type: "uint256",
+                },
+                {
+                  internalType: "uint256",
+                  name: "growthRate",
+                  type: "uint256",
                 },
               ],
               name: "createWrappedToken",
