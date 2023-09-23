@@ -3,11 +3,11 @@ pragma solidity 0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { ERC20Plugins } from "@1inch/token-plugins/contracts/ERC20Plugins.sol";
 import "./Vendor.sol";
 
-contract LSDWrap is ERC20, Ownable {
+contract LSDWrap is ERC20Plugins, Ownable {
     using SafeMath for uint256;
 
     address public factoryOwner;
@@ -23,7 +23,9 @@ contract LSDWrap is ERC20, Ownable {
         uint256 initialCap_,
         uint256 growthRate_,
         address _factoryOwner
-    ) ERC20(name, symbol) Ownable() {
+    ) ERC20(name, symbol) 
+      Ownable()
+      ERC20Plugins(100,9999999999) {
         require(initialCap_ > 0, "Initial cap must be greater than 0");
         underlyingToken = _underlyingToken;  // Assign the passed token to the state variable
         _initialCap = initialCap_;
@@ -37,29 +39,29 @@ contract LSDWrap is ERC20, Ownable {
     }
 
     function wrap(uint256 amount) public {
-        
         require(amount > 0, "Amount must be greater than 0");
-        uint256 totalUnderlying = underlyingToken.balanceOf(address(this));
-        uint256 proportion = (amount.mul(totalSupply())).div(totalUnderlying);
 
-        require(totalSupply() + proportion <= cap(), "ERC20: cap exceeded");       
+        uint256 totalUnderlying = underlyingToken.balanceOf(address(this));
+        uint256 proportion = (totalSupply()+1).div(totalUnderlying+1);
+
+        uint256 tokensToMint = amount.mul(proportion);
+        require(totalSupply() + tokensToMint <= cap(), "ERC20: cap exceeded");
 
         // Transfer the underlying tokens from the user to this contract
         require(underlyingToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
 
-        _mint(msg.sender, proportion); // Mint the new tokens to the user
-
+        _mint(msg.sender, tokensToMint); // Mint the new tokens to the user
     }
 
     function unwrap(uint256 amount) public {
         require(amount > 0, "Amount must be greater than 0");
         _burn(msg.sender, amount); // Burn the wrapped tokens
-
         uint256 totalUnderlying = underlyingToken.balanceOf(address(this));
-        uint256 proportion = (amount.mul(totalUnderlying)).div(totalSupply());
-
+        uint256 proportion = amount.div(totalSupply());
+        uint256 tokenstosend = proportion.mul(totalUnderlying);
+        require(tokenstosend <= underlyingToken.balanceOf(address(this)), "Not enough underlying tokens");
         // Transfer the underlying tokens back to the user
-        require(underlyingToken.transfer(msg.sender, proportion), "Transfer failed");
+        require(underlyingToken.transfer(msg.sender, tokenstosend), "Transfer failed");
 
     }
 }
