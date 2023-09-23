@@ -1,37 +1,34 @@
-pragma solidity 0.8.4; //Do not change the solidity version as it negativly impacts submission grading
+pragma solidity 0.8.4;
 // SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Wrapper.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./Vendor.sol";
 
-// learn more: https://docs.openzeppelin.com/contracts/4.x/erc20
+contract LSDWrap is ERC20, Ownable {
+    using SafeMath for uint256;
 
-contract LSDWrap is ERC20, ERC20Wrapper {
     address public factoryOwner;
     uint256 private _initialCap;
     uint256 private _growthRate; // in tokens per second
-    uint256 private _startTime;    
-
+    uint256 private _startTime;
+    IERC20 public underlyingToken;
 
     constructor(
         string memory name,
         string memory symbol,
-        IERC20 underlyingToken,
+        IERC20 _underlyingToken,
         uint256 initialCap_,
         uint256 growthRate_,
         address _factoryOwner
-    ) ERC20(name, symbol) ERC20Wrapper(underlyingToken) {
+    ) ERC20(name, symbol) Ownable() {
         require(initialCap_ > 0, "Initial cap must be greater than 0");
+        underlyingToken = _underlyingToken;  // Assign the passed token to the state variable
         _initialCap = initialCap_;
         _growthRate = growthRate_;
         _startTime = block.timestamp;
-        factoryOwner = _factoryOwner;
-    }
-
-    // Override decimals function to resolve ambiguity
-    function decimals() public view virtual override(ERC20, ERC20Wrapper) returns (uint8) {
-        return super.decimals();
     }
     
     function cap() public view returns (uint256) {
@@ -40,18 +37,36 @@ contract LSDWrap is ERC20, ERC20Wrapper {
     }
 
     function wrap(uint256 amount) public {
-        require(totalSupply() + amount <= cap(), "ERC20: cap exceeded");       
-        depositFor(msg.sender, amount);
+        
+        require(amount > 0, "Amount must be greater than 0");
+        uint256 totalUnderlying = underlyingToken.balanceOf(address(this));
+        uint256 proportion = (amount.mul(totalSupply())).div(totalUnderlying);
+
+        require(totalSupply() + proportion <= cap(), "ERC20: cap exceeded");       
+
+        // Transfer the underlying tokens from the user to this contract
+        require(underlyingToken.transferFrom(msg.sender, address(this), amount), "Transfer failed");
+
+        _mint(msg.sender, proportion); // Mint the new tokens to the user
+
     }
 
     function unwrap(uint256 amount) public {
-        withdrawTo(msg.sender, amount);
+        require(amount > 0, "Amount must be greater than 0");
+        _burn(msg.sender, amount); // Burn the wrapped tokens
+
+        uint256 totalUnderlying = underlyingToken.balanceOf(address(this));
+        uint256 proportion = (amount.mul(totalUnderlying)).div(totalSupply());
+
+        // Transfer the underlying tokens back to the user
+        require(underlyingToken.transfer(msg.sender, proportion), "Transfer failed");
+
     }
 }
 
 contract TokenFactory is Ownable {
     address[] public createdTokens;
-    IERC20[] public masterAllowedTokens; // Centralized array of allowed token addresses
+    IERC20[] public masterAllowedTokens;
     bool public ownershipAssigned = false;
 
     event MasterTokenAdded(IERC20 token);
@@ -97,10 +112,8 @@ contract TokenFactory is Ownable {
         return createdTokens;
     }
     
-    // Override the transferOwnership function to set ownershipAssigned to true
     function transferOwnership(address newOwner) public override onlyOwner {
         super.transferOwnership(newOwner);
         ownershipAssigned = true;
     }
 }
-
