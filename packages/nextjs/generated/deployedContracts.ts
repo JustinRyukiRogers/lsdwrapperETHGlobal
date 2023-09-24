@@ -5,7 +5,7 @@ const contracts = {
       name: "localhost",
       contracts: {
         LSDWrap: {
-          address: "0x2E2Ed0Cfd3AD2f1d34481277b3204d807Ca2F8c2",
+          address: "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
           abi: [
             {
               inputs: [
@@ -667,7 +667,7 @@ const contracts = {
           ],
         },
         LSDWrap1: {
-          address: "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD",
+          address: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
           abi: [
             {
               inputs: [
@@ -1329,7 +1329,7 @@ const contracts = {
           ],
         },
         PluginExample: {
-          address: "0xD8a5a9b31c3C0232E196d518E89Fd8bF83AcAd43",
+          address: "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
           abi: [
             {
               inputs: [
@@ -1685,7 +1685,7 @@ const contracts = {
           ],
         },
         RebasedToken: {
-          address: "0x7969c5eD335650692Bc04293B07F5BF2e7A673C0",
+          address: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
           abi: [
             {
               inputs: [
@@ -2013,7 +2013,7 @@ const contracts = {
           ],
         },
         TokenFactory: {
-          address: "0x21dF544947ba3E8b3c32561399E88B52Dc8b2823",
+          address: "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
           abi: [
             {
               anonymous: false,

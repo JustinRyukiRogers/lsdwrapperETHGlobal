@@ -92,14 +92,15 @@ contract LSDWrap1 is ERC20Plugins, Ownable {
 
     function unwrap(uint256 amount) public {
         require(amount > 0, "Amount must be greater than 0");
-        _burn(msg.sender, amount); // Burn the wrapped tokens
+
         uint256 totalUnderlying = underlyingToken.balanceOf(address(this));
         uint256 proportion = amount.mul(10**18).div(totalSupply());
         uint256 tokenstosend = proportion.mul(totalUnderlying.div(10**18));
         require(tokenstosend <= underlyingToken.balanceOf(address(this)), "Not enough underlying tokens");
         // Transfer the underlying tokens back to the user
-        require(underlyingToken.transfer(msg.sender, tokenstosend), "Transfer failed");
 
+        require(underlyingToken.transfer(msg.sender, tokenstosend), "Transfer failed");
+        _burn(msg.sender, amount); // Burn the wrapped tokens
     }
 }
 
