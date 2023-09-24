@@ -1,11 +1,10 @@
-pragma solidity 0.8.4;
+pragma solidity ^0.8.4;
 // SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { ERC20Plugins } from "@1inch/token-plugins/contracts/ERC20Plugins.sol";
-import "./Vendor.sol";
+import {ERC20Plugins} from "./ERC20Plugins.sol";
 
 contract LSDWrap is ERC20Plugins, Ownable {
     using SafeMath for uint256;
@@ -23,9 +22,9 @@ contract LSDWrap is ERC20Plugins, Ownable {
         uint256 initialCap_,
         uint256 growthRate_,
         address _factoryOwner
-    ) ERC20(name, symbol) 
-      Ownable()
-      ERC20Plugins(100,9999999999) {
+    ) ERC20(name, symbol)
+      ERC20Plugins(1000, 999999) // Add this line
+      Ownable() {
         require(initialCap_ > 0, "Initial cap must be greater than 0");
         underlyingToken = _underlyingToken;  // Assign the passed token to the state variable
         _initialCap = initialCap_;
@@ -65,6 +64,9 @@ contract LSDWrap is ERC20Plugins, Ownable {
 
     }
 }
+
+
+
 
 contract TokenFactory is Ownable {
     address[] public createdTokens;

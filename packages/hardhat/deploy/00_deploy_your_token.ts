@@ -6,31 +6,41 @@ const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvir
   const { deploy } = hre.deployments;
 
   // Deploy TokenFactory contract
-  const tokenFactory = await deploy("TokenFactory", {
+  const tokenFactoryDeployment = await deploy("TokenFactory", {
     from: deployer,
     args: [],
     log: true,
     autoMine: true,
   });
 
-  // If you want to deploy an instance of LSDWrap during the deployment process, you can do so here.
-  // Note: You'll need to provide the necessary constructor arguments for LSDWrap.
-  // For this example, I'm leaving it commented out as you might want to deploy LSDWrap instances manually after setting allowed tokens in the TokenFactory.
-
-  
-  await deploy("LSDWrap", {
+  // Deploy LSDWrap contract using the address of the just-deployed TokenFactory
+  const lsdWrapDeployment = await deploy("LSDWrap", {
     from: deployer,
-    args: ["LSDWrap Name", "LSDW", "0xE67ABDA0D43f7AC8f37876bBF00D1DFadbB93aaa", 1 * 10^21, 1*10^6, "0xA9D81201dc7599Df2990Dbf762Df7b9dD706A4a1"],
+    args: [
+      "LSDWrap Name", 
+      "LSDW", 
+      "0xE67ABDA0D43f7AC8f37876bBF00D1DFadbB93aaa", // Example underlying token address
+      1000*10^18, 
+      0.5*10^17, 
+      tokenFactoryDeployment.address
+    ],
     log: true,
     autoMine: true,
-});
+  });
 
-  
+  // Deploy PluginExample using the address of the just-deployed LSDWrap as the token
+  await deploy("PluginExample", {
+    from: deployer,
+    args: ["PluginExampleTokenName", "PET", lsdWrapDeployment.address],
+    log: true,
+    autoMine: true,
+  });
 
-  // Print out the address of the deployed TokenFactory
-  console.log(`TokenFactory deployed to: ${tokenFactory.address}`);
+  // Print out the addresses of the deployed contracts
+  console.log(`TokenFactory deployed to: ${tokenFactoryDeployment.address}`);
+  console.log(`LSDWrap deployed to: ${lsdWrapDeployment.address}`);
 };
 
 export default deployContracts;
 
-deployContracts.tags = ["TokenFactory", "LSDWrap"];
+deployContracts.tags = ["TokenFactory", "LSDWrap", "PluginExample"];
